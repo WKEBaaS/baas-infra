@@ -1,0 +1,28 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: db
+  namespace: baas
+spec:
+  managed:
+    services:
+      disabledDefaultServices: ["ro", "r"]
+  instances: 1
+  storage:
+    size: 2Gi
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: db-ingress
+  namespace: baas
+spec:
+  entryPoints:
+    - postgres
+  routes:
+    - match: HostSNI(`db.baas.wke.csie.ncnu.edu.tw`)
+      services:
+        - name: db-rw
+          port: 5432
+  tls:
+    secretName: wildcard-baas-tls
