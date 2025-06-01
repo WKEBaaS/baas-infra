@@ -2,7 +2,7 @@
 
 <!-- toc -->
 
-- [Prepare Namespaces](#prepare-namespaces)
+- [Prepare Namespaces (if not exist)](#prepare-namespaces-if-not-exist)
 - [Setup BaaS Database](#setup-baas-database)
 
 <!-- tocstop -->
@@ -10,7 +10,7 @@
 > [!CAUTION]
 > Please Setup Cloud First
 
-## Prepare Namespaces
+## Prepare Namespaces (if not exist)
 
 1. BaaS
 2. BaaS-Project
