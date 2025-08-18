@@ -4,9 +4,35 @@ metadata:
   name: baas-db
   namespace: baas
 spec:
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    name: postgresql
+    major: 18
   managed:
     services:
       disabledDefaultServices: ["ro", "r"]
+    roles:
+      - name: app
+        login: true
+        superuser: true
+      - name: anon
+        ensure: present
+        comment: PostgREST Anonymous Role
+      - name: authenticated
+        ensure: present
+        comment: PostgREST Logged-in User Role
+      - name: app_admin
+        ensure: present
+        comment: PostgREST App Admin Role
+        bypassrls: true
+      - name: authenticator
+        ensure: present
+        comment: PostgREST Authenticator
+        inRoles:
+          - anon
+          - authenticated
+          - app_admin
   instances: 1
   storage:
     size: 2Gi
