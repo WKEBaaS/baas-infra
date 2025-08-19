@@ -29,6 +29,9 @@ spec:
       - name: authenticator
         ensure: present
         comment: PostgREST Authenticator
+        login: true
+        passwordSecret:
+          name: baas-db-authenticator
         inRoles:
           - anon
           - authenticated

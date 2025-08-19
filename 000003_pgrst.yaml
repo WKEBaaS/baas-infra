@@ -44,6 +44,21 @@ spec:
                 secretKeyRef:
                   name: baas-db-app
                   key: uri
+        - name: openapi
+          image: scalarapi/api-reference:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: API_REFERENCE_CONFIG
+              value: |
+                {
+                  "sources": [
+                    {
+                      "url": "https://baas.wke.csie.ncnu.edu.tw/api/d",
+                    }
+                  ],
+                  "theme": "purple"
+                }
 ---
 apiVersion: v1
 kind: Service
@@ -54,9 +69,14 @@ spec:
   selector:
     app: baas-pgrst
   ports:
-    - protocol: TCP
+    - name: postgrest
+      protocol: TCP
       port: 3000
       targetPort: 3000
+    - name: openapi
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
 ---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
@@ -67,11 +87,20 @@ spec:
   entryPoints:
     - websecure
   routes:
+    - match: Host(`baas.wke.csie.ncnu.edu.tw`) && PathPrefix(`/api/d/docs`)
+      kind: Rule
+      services:
+        - name: baas-pgrst
+          port: 8080
+      middlewares:
+        - name: baas-pgrst-docs-strip-prefix
     - match: Host(`baas.wke.csie.ncnu.edu.tw`) && PathPrefix(`/api/d`)
       kind: Rule
       services:
         - name: baas-pgrst
           port: 3000
+      middlewares:
+        - name: baas-pgrst-strip-prefix
   tls:
     secretName: wke-tls
 ---
@@ -84,3 +113,13 @@ spec:
   stripPrefix:
     prefixes:
       - /api/d
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: baas-pgrst-docs-strip-prefix
+  namespace: baas
+spec:
+  stripPrefix:
+    prefixes:
+      - /api/d/docs
