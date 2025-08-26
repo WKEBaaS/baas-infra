@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: baas-migration-job
+  namespace: baas
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      containers:
+        - name: dbmate
+          image: ghcr.io/amacneil/dbmate:2
+          args: ["up"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: baas-db-app
+                  key: uri
+            - name: DBMATE_MIGRATIONS_DIR
+              value: /migrations
+          volumeMounts:
+            - name: migrations
+              mountPath: /migrations
+              readOnly: true
+      volumes:
+        - name: migrations
+          configMap:
+            name: migrations
+      restartPolicy: Never
+  backoffLimit: 4
