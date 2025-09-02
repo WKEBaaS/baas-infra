@@ -7,7 +7,7 @@ data:
   PGRST_DB_SCHEMA: "api"
   PGRST_DB_ANON_ROLE: "anon"
   PGRST_OPENAPI_SECURITY_ACTIVE: "true"
-  PGRST_OPENAPI_SERVER_PROXY_URI: "https://baas.wke.csie.ncnu.edu.tw/api/d"
+  PGRST_OPENAPI_SERVER_PROXY_URI: "https://baas.wke.csie.ncnu.edu.tw/api/rest"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -54,7 +54,7 @@ spec:
                 {
                   "sources": [
                     {
-                      "url": "https://baas.wke.csie.ncnu.edu.tw/api/d",
+                      "url": "https://baas.wke.csie.ncnu.edu.tw/api/rest",
                     }
                   ],
                   "theme": "purple"
@@ -87,14 +87,14 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`baas.wke.csie.ncnu.edu.tw`) && PathPrefix(`/api/d/docs`)
+    - match: Host(`baas.wke.csie.ncnu.edu.tw`) && PathPrefix(`/api/rest/docs`)
       kind: Rule
       services:
         - name: baas-pgrst
           port: 8080
       middlewares:
-        - name: baas-pgrst-docs-strip-prefix
-    - match: Host(`baas.wke.csie.ncnu.edu.tw`) && PathPrefix(`/api/d`)
+        - name: baas-pgrst-strip-prefix
+    - match: Host(`baas.wke.csie.ncnu.edu.tw`) && PathPrefix(`/api/rest`)
       kind: Rule
       services:
         - name: baas-pgrst
@@ -112,14 +112,5 @@ metadata:
 spec:
   stripPrefix:
     prefixes:
-      - /api/d
----
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: baas-pgrst-docs-strip-prefix
-  namespace: baas
-spec:
-  stripPrefix:
-    prefixes:
-      - /api/d/docs
+      - /api/rest/docs
+      - /api/rest

@@ -10,7 +10,7 @@ spec:
       containers:
         - name: dbmate
           image: ghcr.io/amacneil/dbmate:2
-          args: ["up"]
+          args: ["--wait", up"]
           env:
             - name: DATABASE_URL
               valueFrom:

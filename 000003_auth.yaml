@@ -6,6 +6,7 @@ metadata:
 data:
   EMAIL_AND_PASSWORD_ENABLED: "true"
   JWT_EXPIRATION_TIME: "15m"
+  TRUSTED_ORIGINS: "http://localhost:5173"
 ---
 apiVersion: apps/v1
 kind: Deployment

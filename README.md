@@ -72,9 +72,8 @@ kubectl create secret -n baas generic baas-db-authenticator \
 Create secret for auth service encryption, signing, and hashing.
 
 ```sh
-create-auth-secret:
-  kubectl create secret -n baas generic baas-auth-secret \
-    --from-literal AUTH_SECRET=$(openssl rand -base64 32)
+kubectl create secret -n baas generic baas-auth-secret \
+  --from-literal AUTH_SECRET=$(openssl rand -base64 32)
 ```
 
 #### Deploy Auth Service
@@ -108,5 +107,5 @@ Create ConfigMap from ./migrations/i3s/ for projects
 
 ```sh
 kubectl create configmap -n baas-project migrations \
-  --from-file={{ source_dir }}/migrations/i3s/
+  --from-file=./migrations/i3s/
 ```
