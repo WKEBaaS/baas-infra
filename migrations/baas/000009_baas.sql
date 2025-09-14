@@ -13,7 +13,7 @@ CREATE TABLE dbo.projects
     CONSTRAINT fk_dbo_projects_id FOREIGN KEY (id) REFERENCES dbo.objects
 );
 
-CREATE TABLE dbo.project_settings
+CREATE TABLE dbo.project_auth_settings
 (
     id              uuid        NOT NULL DEFAULT uuidv7(),
     project_id      uuid        NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE dbo.project_settings
     CONSTRAINT pk_dbo_project_auth_settings PRIMARY KEY (id),
     CONSTRAINT fk_dbo_project_auth_settings_id FOREIGN KEY (project_id) REFERENCES dbo.projects ON DELETE CASCADE
 );
-COMMENT ON COLUMN dbo.project_settings.secret IS 'better-auth required secret';
+COMMENT ON COLUMN dbo.project_auth_settings.secret IS 'better-auth required secret';
 
 CREATE TABLE dbo.project_auth_providers
 (
@@ -43,6 +43,19 @@ CREATE TABLE dbo.project_auth_providers
 );
 COMMENT ON TABLE dbo.project_auth_providers IS 'project identity providers';
 COMMENT ON COLUMN dbo.project_auth_providers.name IS 'identity provider name';
+
+CREATE TABLE dbo.project_s3_settings
+(
+    id                uuid        NOT NULL DEFAULT uuidv7(),
+    project_id        uuid        NOT NULL,
+    access_key_id     TEXT        NOT NULL,
+    secret_access_key TEXT        NOT NULL,
+    bucket            TEXT        NOT NULL,
+    created_at        timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at        timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_dbo_project_s3_settings PRIMARY KEY (id),
+    CONSTRAINT fk_dbo_project_s3_settings_project_id FOREIGN KEY (project_id) REFERENCES dbo.projects ON DELETE CASCADE
+);
 
 CREATE OR REPLACE VIEW dbo.vd_projects AS
 (
