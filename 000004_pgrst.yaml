@@ -1,0 +1,116 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: baas-pgrst-config
+  namespace: baas
+data:
+  PGRST_DB_SCHEMA: "api"
+  PGRST_DB_ANON_ROLE: "anon"
+  PGRST_OPENAPI_SECURITY_ACTIVE: "true"
+  PGRST_OPENAPI_SERVER_PROXY_URI: "https://baas.wke.csie.ncnu.edu.tw/api/rest"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: baas-pgrst
+  namespace: baas
+  labels:
+    app: baas-pgrst
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: baas-pgrst
+  template:
+    metadata:
+      labels:
+        app: baas-pgrst
+    spec:
+      containers:
+        - name: postgrest
+          image: postgrest/postgrest:v13.0.4
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - secretRef:
+                name: baas-pgrst-secret
+            - configMapRef:
+                name: baas-pgrst-config
+          env:
+            - name: PGRST_SERVER_PORT
+              value: "3000"
+            - name: PGRST_DB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: baas-db-app
+                  key: uri
+        - name: openapi
+          image: scalarapi/api-reference:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: API_REFERENCE_CONFIG
+              value: |
+                {
+                  "sources": [
+                    {
+                      "url": "https://baas.wke.csie.ncnu.edu.tw/api/rest",
+                    }
+                  ],
+                  "theme": "purple"
+                }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: baas-pgrst
+  namespace: baas
+spec:
+  selector:
+    app: baas-pgrst
+  ports:
+    - name: postgrest
+      protocol: TCP
+      port: 3000
+      targetPort: 3000
+    - name: openapi
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: baas-pgrst-ingress
+  namespace: baas
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`baas.wke.csie.ncnu.edu.tw`) && PathPrefix(`/api/rest/docs/`)
+      kind: Rule
+      services:
+        - name: baas-pgrst
+          port: 8080
+      middlewares:
+        - name: baas-pgrst-strip-prefix
+    - match: Host(`baas.wke.csie.ncnu.edu.tw`) && PathPrefix(`/api/rest`)
+      kind: Rule
+      services:
+        - name: baas-pgrst
+          port: 3000
+      middlewares:
+        - name: baas-pgrst-strip-prefix
+  tls:
+    secretName: wke-tls
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: baas-pgrst-strip-prefix
+  namespace: baas
+spec:
+  stripPrefix:
+    prefixes:
+      - /api/rest/docs
+      - /api/rest
