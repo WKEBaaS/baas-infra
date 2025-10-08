@@ -21,10 +21,12 @@ CREATE TABLE dbo.project_auth_settings
     trusted_origins TEXT[]      NOT NULL DEFAULT ARRAY []::TEXT[],
     created_at      timestamptz NOT NULL DEFAULT NOW(),
     updated_at      timestamptz NOT NULL DEFAULT NOW(),
+    proxy_url       TEXT        NULL,
     CONSTRAINT pk_dbo_project_auth_settings PRIMARY KEY (id),
     CONSTRAINT fk_dbo_project_auth_settings_id FOREIGN KEY (project_id) REFERENCES dbo.projects ON DELETE CASCADE
 );
 COMMENT ON COLUMN dbo.project_auth_settings.secret IS 'better-auth required secret';
+COMMENT ON COLUMN dbo.project_auth_settings.proxy_url IS 'the URL of the proxy server to be used for outbound requests to identity providers';
 
 CREATE TABLE dbo.project_auth_providers
 (

@@ -73,7 +73,7 @@ Create secret for auth service encryption, signing, and hashing.
 
 ```sh
 kubectl create secret -n baas generic baas-auth-secret \
-  --from-literal AUTH_SECRET=$(openssl rand -base64 32)
+  --from-literal BETTER_AUTH_SECRET=$(openssl rand -base64 32)
 ```
 
 #### Deploy Auth Service

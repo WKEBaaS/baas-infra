@@ -2,21 +2,17 @@
 
 GRANT ALL ON TABLE dbo.projects TO authenticated;
 GRANT ALL ON TABLE dbo.objects TO authenticated;
+GRANT ALL ON TABLE dbo.project_s3_settings TO authenticated;
 
 CREATE TABLE api.create_project_output
 (
-    id          uuid        NOT NULL,
-    ref         VARCHAR(20) NOT NULL,
-    auth_secret TEXT        NOT NULL
+    id                   uuid        NOT NULL,
+    ref                  VARCHAR(20) NOT NULL,
+    auth_secret          TEXT        NOT NULL,
+    s3_bucket            TEXT        NOT NULL,
+    s3_access_key_id     TEXT        NOT NULL,
+    s3_secret_access_key TEXT        NOT NULL
 );
-
-CREATE OR REPLACE FUNCTION api.get_current_role()
-    RETURNS TEXT AS
-$$
-BEGIN
-    RETURN auth.jwt() ->> 'role';
-END;
-$$ LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION api.create_project(
     name TEXT,
@@ -52,18 +48,23 @@ BEGIN
                      SELECT id, 'email', TRUE
                      FROM new_object),
              s3_settings AS (
-                 INSERT INTO dbo.project_s3_settings (project_id, access_key_id, secret_access_key, bucket)
+                 INSERT INTO dbo.project_s3_settings (project_id, bucket, access_key_id, secret_access_key)
                      SELECT id,
+                            CONCAT('baas-', reference),
                             reference,
-                            ENCODE(gen_random_bytes(32), 'base64'),
-                            reference
-                     FROM new_project)
+                            nanoid(32)
+                     FROM new_project
+                     RETURNING project_id, bucket, access_key_id, secret_access_key)
         SELECT o.id
-             , p.reference AS ref
-             , a.secret    AS auth_secret
+             , p.reference
+             , a.secret
+             , s.bucket
+             , s.access_key_id
+             , s.secret_access_key
         FROM new_object o
                  JOIN new_project p ON o.id = p.id
-                 JOIN auth_settings a ON o.id = a.project_id;
+                 JOIN auth_settings a ON o.id = a.project_id
+                 JOIN s3_settings s ON o.id = s.project_id;
 END;
 $$
     LANGUAGE plpgsql
@@ -74,8 +75,15 @@ Creates a new project with default settings and returns the project details.
 $$;
 
 
+CREATE TABLE api.delete_project_output
+(
+    ref              VARCHAR(20) NOT NULL,
+    s3_bucket        TEXT        NOT NULL,
+    s3_access_key_id TEXT        NOT NULL
+);
+
 CREATE OR REPLACE FUNCTION api.delete_project(project_id uuid)
-    RETURNS VOID AS
+    RETURNS SETOF api.delete_project_output AS
 $$
 DECLARE
     v_user_id uuid := auth.jwt() ->> 'sub';
@@ -98,8 +106,18 @@ BEGIN
             HINT = 'User does not have permission to delete this project.';
     END IF;
 
-    DELETE FROM dbo.projects WHERE id = project_id;
-    DELETE FROM dbo.objects WHERE id = project_id;
+    RETURN QUERY
+        WITH s3_settings AS (
+            DELETE FROM dbo.project_s3_settings
+                WHERE project_s3_settings.project_id = delete_project.project_id
+                RETURNING bucket, access_key_id),
+             project AS (
+                 DELETE FROM dbo.projects WHERE id = project_id RETURNING reference),
+             object AS (
+                 DELETE FROM dbo.objects WHERE id = project_id)
+        SELECT p.reference, s.bucket, s.access_key_id
+        FROM project p,
+             s3_settings s;
 END;
 $$ LANGUAGE plpgsql VOLATILE;
 

@@ -87,7 +87,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`baas.wke.csie.ncnu.edu.tw`) && PathPrefix(`/api/rest/docs`)
+    - match: Host(`baas.wke.csie.ncnu.edu.tw`) && PathPrefix(`/api/rest/docs/`)
       kind: Rule
       services:
         - name: baas-pgrst
