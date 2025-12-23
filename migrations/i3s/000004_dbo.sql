@@ -103,18 +103,27 @@ CREATE TABLE IF NOT EXISTS dbo.inheritances
     CONSTRAINT fk_dbo_inheritance_ccid FOREIGN KEY (ccid) REFERENCES dbo.classes ON DELETE CASCADE
 );
 
+CREATE TYPE dbo.permission_role_type AS ENUM ('USER', 'GROUP');
+
 CREATE TABLE IF NOT EXISTS dbo.permissions
 (
-    class_id        VARCHAR(21)        NOT NULL,
-    role_type       BOOLEAN            NOT NULL,
-    role_id         uuid               NOT NULL,
-    permission_bits SMALLINT DEFAULT 1 NOT NULL,
+    class_id        VARCHAR(21)              NOT NULL,
+    role_type       dbo.permission_role_type NOT NULL,
+    role_id         uuid                     NOT NULL,
+    permission_bits SMALLINT DEFAULT 1       NOT NULL,
     CONSTRAINT uq_dbo_permissions UNIQUE (class_id, role_type, role_id),
     CONSTRAINT fk_dbo_permissions_class_id FOREIGN KEY (class_id) REFERENCES dbo.classes ON DELETE CASCADE
 );
-COMMENT ON COLUMN dbo.permissions.role_type IS 'True表示是使用者,False表示是群組';
-COMMENT ON COLUMN dbo.permissions.role_id IS '由RoleType決定值為Auth.Roles.ID或Auth.User.ID';
+COMMENT ON COLUMN dbo.permissions.role_type IS 'PERMISSION_ROLE_TYPE: USER|GROUP';
+COMMENT ON COLUMN dbo.permissions.role_id IS '由RoleType決定值為auth.group.id或auth.user.id';
 
+-- Use to convert existing boolean role_type to the new enum type
+-- ALTER TABLE dbo.permissions
+--     ALTER COLUMN role_type TYPE permission_role_type
+--         USING CASE
+--                   WHEN permissions.role_type THEN 'USER'::permission_role_type
+--                   ELSE 'GROUP'::permission_role_type
+--         END;
 
 CREATE TABLE IF NOT EXISTS dbo.permission_enum
 (
@@ -122,8 +131,7 @@ CREATE TABLE IF NOT EXISTS dbo.permission_enum
     name TEXT,
     bit  SMALLINT NOT NULL,
     CONSTRAINT pk_permission_enum PRIMARY KEY (id),
-    CONSTRAINT uq_permission_enum_name UNIQUE (name),
-    CONSTRAINT uq_permission_enum_bit UNIQUE (bit)
+    CONSTRAINT uq_permission_enum_name UNIQUE (name)
 );
 --
 INSERT INTO dbo.permission_enum(name, bit)

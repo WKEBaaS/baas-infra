@@ -99,13 +99,14 @@ CREATE TABLE auth.sso_providers
 
 CREATE TABLE auth.groups
 (
-    id          uuid         NOT NULL DEFAULT uuidv7(),
-    name        VARCHAR(255) NOT NULL,
-    description TEXT,
-    created_at  timestamptz  NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at  timestamptz  NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted_at  timestamptz,
-    is_enabled  BOOLEAN               DEFAULT TRUE,
+    id           uuid         NOT NULL DEFAULT uuidv7(),
+    name         VARCHAR(255) NOT NULL,
+    display_name VARCHAR(255),
+    description  TEXT,
+    created_at   timestamptz  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at   timestamptz  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at   timestamptz,
+    is_enabled   BOOLEAN               DEFAULT TRUE,
     CONSTRAINT pk_auth_group PRIMARY KEY (id),
     CONSTRAINT uq_auth_group_name UNIQUE (name)
 );
@@ -114,6 +115,7 @@ CREATE TABLE auth.user_groups
 (
     user_id    uuid NOT NULL,
     group_id   uuid NOT NULL,
+    rank       INTEGER,
     created_at timestamptz DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamptz DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT pk_auth_user_group PRIMARY KEY (user_id, group_id),
@@ -122,10 +124,10 @@ CREATE TABLE auth.user_groups
 );
 
 -- Auth tuples
-INSERT INTO auth.groups (name, description)
-VALUES ('admin', 'Admin role'),
-       ('user', 'User role'),
-       ('anon', 'Anonymouse role');
+INSERT INTO auth.groups (name, display_name, description)
+VALUES ('admin', 'Admin', 'Admin role'),
+       ('user', 'User', 'User role'),
+       ('anon', 'Anonymous', 'Anonymous role');
 
 CREATE FUNCTION auth.jwt() RETURNS jsonb
     STABLE

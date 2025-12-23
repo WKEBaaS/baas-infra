@@ -76,4 +76,24 @@ FROM dbo.objects o,
 WHERE o.id = p.id
     );
 
+CREATE TABLE dbo.create_class_functions
+(
+    id            uuid PRIMARY KEY  DEFAULT gen_random_uuid(),
+    project_id    uuid     NOT NULL,
+    name          TEXT     NOT NULL,
+    version       SMALLINT NOT NULL DEFAULT 1,
+    description   TEXT,
+    authenticated BOOLEAN           DEFAULT FALSE,
+    -- Stores ClassID, CheckPermission, CheckBits
+    root_node     jsonb    NOT NULL DEFAULT '{}',
+    node          jsonb    NOT NULL DEFAULT '{}',
+    created_at    timestamptz       DEFAULT NOW(),
+    updated_at    timestamptz       DEFAULT NOW(),
+    CONSTRAINT fk_dbo_class_functions_project_id FOREIGN KEY (project_id) REFERENCES dbo.projects ON DELETE CASCADE,
+    CONSTRAINT uq_dbo_class_functions UNIQUE (name, version, project_id)
+);
+
+-- Add a GIN index to allow fast searching inside the JSONB 'nodes' tree
+CREATE INDEX idx_class_functions_nodes ON dbo.create_class_functions USING gin (node);
+
 -- migrate:down

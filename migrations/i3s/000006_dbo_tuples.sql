@@ -21,35 +21,35 @@ $$
         IF NOT EXISTS(SELECT 1 FROM dbo.classes) THEN
             SELECT id
             FROM dbo.fn_insert_class(
-                    _parent_class_id := NULL,
-                    _entity_id := web_resource_id,
-                    _chinese_name := '/',
-                    _chinese_description := NULL,
-                    _english_name := 'Root',
-                    _english_description := NULL,
-                    _owner_id := NULL
+                    NULL,
+                    web_resource_id,
+                    '/',
+                    NULL,
+                    'Root',
+                    NULL,
+                    NULL
                  )
             INTO root_class_id;
 
             PERFORM dbo.fn_insert_class(
-                    _parent_class_id := root_class_id,
-                    _entity_id := user_entity_id,
-                    _chinese_name := '使用者',
-                    _chinese_description := NULL,
-                    _english_name := 'User',
-                    _english_description := NULL,
-                    _owner_id := NULL
+                    root_class_id,
+                    user_entity_id,
+                    '使用者',
+                    NULL,
+                    'User',
+                    NULL,
+                    NULL
                     );
 
             SELECT id
             FROM dbo.fn_insert_class(
-                    _parent_class_id := root_class_id,
-                    _entity_id := web_resource_id,
-                    _chinese_name := '首頁',
-                    _chinese_description := NULL,
-                    _english_name := 'Home',
-                    _english_description := NULL,
-                    _owner_id := NULL
+                    root_class_id,
+                    web_resource_id,
+                    '首頁',
+                    NULL,
+                    'Home',
+                    NULL,
+                    NULL
                  )
             INTO home_class_id;
 
