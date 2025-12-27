@@ -1,0 +1,18 @@
+# Please create S3 credentials secret before deploying this application.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: baas-web
+  namespace: baas
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: baas-web
+          image: ghcr.io/wkebaas/web:v0.1.6
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: baas-web-config

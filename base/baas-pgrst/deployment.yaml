@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: baas-pgrst
+  namespace: baas
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: postgrest
+          image: postgrest/postgrest:v13.0.4
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - secretRef:
+                name: baas-pgrst-secret
+            - configMapRef:
+                name: baas-pgrst-config
+          env:
+            - name: PGRST_SERVER_PORT
+              value: "3000"
+            - name: PGRST_DB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: baas-db-app
+                  key: uri
+        - name: openapi
+          image: scalarapi/api-reference:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: API_REFERENCE_CONFIG
+              value: |
+                {
+                  "sources": [
+                    {
+                      "url": "https://baas.wke.csie.ncnu.edu.tw/api/rest",
+                    }
+                  ],
+                  "theme": "purple"
+                }

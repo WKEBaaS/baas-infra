@@ -1,0 +1,9 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: project-manager-role
+  namespace: baas-project  # <--- 權限範圍限制在 baas-project
+rules:
+- apiGroups: ["*"]         # "*" 代表所有 API 群組 (apps, batch, extensions...)
+  resources: ["*"]         # "*" 代表所有資源 (pods, deployments, secrets...)
+  verbs: ["*"]             # "*" 代表所有動作 (get, list, create, delete...)

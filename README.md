@@ -3,9 +3,7 @@
 <!-- toc -->
 
 - [Prepare Namespaces (if not exist)](#prepare-namespaces-if-not-exist)
-- [Setup BaaS Services](#setup-baas-services)
-  * [Setup Database](#setup-database)
-    + [Init Cluster](#init-cluster)
+- [Setup Environment Variables](#setup-environment-variables)
     + [Migrate BaaS Database](#migrate-baas-database)
     + [Create basic auth secret for Authenticator role used by PostgREST](#create-basic-auth-secret-for-authenticator-role-used-by-postgrest)
   * [Setup Auth Service](#setup-auth-service)
@@ -13,6 +11,9 @@
   * [Setup PostgREST](#setup-postgrest)
     + [Prepare JWT for PostgREST](#prepare-jwt-for-postgrest)
     + [Deploy PostgREST](#deploy-postgrest)
+  * [Setup BaaS API](#setup-baas-api)
+    + [Create Kubernetes Role and RoleBinding for BaaS API to access BaaS-Project namespace](#create-kubernetes-role-and-rolebinding-for-baas-api-to-access-baas-project-namespace)
+    + [Setup BaaS API Environment Secret](#setup-baas-api-environment-secret)
 - [Setup BaaS Project](#setup-baas-project)
   * [Create migrations for projects](#create-migrations-for-projects)
 
@@ -29,6 +30,14 @@
 ```sh
 kubectl create namespace baas
 kubectl create namespace baas-project
+```
+
+## Setup Environment Variables
+
+```sh
+source .env
+```
+
 ```
 
 ## Setup BaaS Services
@@ -97,6 +106,17 @@ kubectl create secret -n baas generic baas-pgrst-secret \
 
 ```sh
 kubectl apply -f ./000004_pgrst.yaml
+```
+
+### Setup BaaS API
+
+#### Create Kubernetes Role and RoleBinding for BaaS API to access BaaS-Project namespace
+
+#### Setup BaaS API Environment Secret
+
+```sh
+kubectl create secret -n baas generic baas-s3-credentials \
+  --from-literal S3_SECRETACCESSKEY=${S3_SECRETACCESSKEY}
 ```
 
 ## Setup BaaS Project

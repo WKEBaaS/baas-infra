@@ -1,0 +1,5 @@
+*secret.env
+secret.properties
+.env
+*.key
+*.crt

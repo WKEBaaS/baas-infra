@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: baas
+
+# 定義要管理的資源檔
+resources:
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+
+# 定義 Secret 和 ConfigMap Generator
+secretGenerator:
+  - name: baas-auth-secret
+    envs:
+      - secret.env
+
+configMapGenerator:
+  - name: baas-auth-config
+    envs:
+      - config.env
+
+# (選填) 如果想要所有的資源都自動加上標籤
+labels:
+  - pairs:
+      app: baas-auth
+    includeSelectors: true

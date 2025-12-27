@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: baas
+
+resources:
+  - migrate-baas.yaml
+
+configMapGenerator:
+- name: migrations
+  files:
+    - ../../migrations/i3s/000001_init.sql
+    - ../../migrations/i3s/000002_nanoid.sql
+    - ../../migrations/i3s/000003_auth.sql
+    - ../../migrations/i3s/000004_dbo.sql
+    - ../../migrations/i3s/000005_dbo_fn.sql
+    - ../../migrations/i3s/000006_dbo_tuples.sql
+    - ../../migrations/i3s/000007_dbo_api.sql
+    - ../../migrations/i3s/000008_auth_api.sql
+    - ../../migrations/i3s/000009_api.sql
+    - ../../migrations/baas/000009_baas.sql
+    - ../../migrations/baas/000010_project_api.sql

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: baas-pgrst
+  namespace: baas
+spec:
+  ports:
+    - name: postgrest
+      protocol: TCP
+      port: 3000
+      targetPort: 3000
+    - name: openapi
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
