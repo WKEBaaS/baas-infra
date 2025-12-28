@@ -11,7 +11,7 @@ spec:
       serviceAccountName: baas-api-sa
       containers:
         - name: baas-api
-          image: ghcr.io/wkebaas/api:v0.1.7
+          image: ghcr.io/wkebaas/api:v0.1.10
           ports:
             - containerPort: 3000
           envFrom:

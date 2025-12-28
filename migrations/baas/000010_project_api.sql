@@ -129,17 +129,18 @@ CREATE TABLE api.update_project_output
     ref VARCHAR(20) NOT NULL
 );
 
+
 CREATE OR REPLACE FUNCTION api.update_project(
-    id uuid,
-    name TEXT,
-    description TEXT,
-    trusted_origins TEXT[],
-    proxy_url TEXT
-) RETURNS SETOF api.update_project_output AS
+    p_id uuid,
+    p_name TEXT,
+    p_description TEXT,
+    p_trusted_origins TEXT[],
+    p_proxy_url TEXT
+) RETURNS api.update_project_output AS
 $$
-    # VARIABLE_CONFLICT USE_COLUMN
 DECLARE
     v_user_id uuid := auth.jwt() ->> 'sub';
+    v_result  api.update_project_output%ROWTYPE;
 BEGIN
     IF v_user_id IS NULL THEN
         RAISE SQLSTATE 'PT401' USING
@@ -147,33 +148,36 @@ BEGIN
             HINT = 'User must be authenticated to delete a project.';
     END IF;
 
-    IF NOT EXISTS(SELECT 1 FROM dbo.projects WHERE id = update_project.id) THEN
+    IF NOT EXISTS(SELECT 1 FROM dbo.projects WHERE id = p_id) THEN
         RAISE SQLSTATE 'PT404' USING
             MESSAGE = 'Not Found',
             HINT = 'Project not found.';
     END IF;
 
-    IF NOT EXISTS(SELECT 1 FROM dbo.objects WHERE id = update_project.id AND owner_id = v_user_id) THEN
+    IF NOT EXISTS(SELECT 1 FROM dbo.objects WHERE id = p_id AND owner_id = v_user_id) THEN
         RAISE SQLSTATE 'PT403' USING
             MESSAGE = 'Forbidden',
             HINT = 'User does not have permission to delete this project.';
     END IF;
 
     UPDATE dbo.objects
-    SET chinese_name        = COALESCE(update_project.name, chinese_name),
-        chinese_description = COALESCE(update_project.description, chinese_description),
+    SET chinese_name        = COALESCE(p_name, chinese_name),
+        chinese_description = COALESCE(p_description, chinese_description),
         updated_at          = NOW()
-    WHERE id = update_project.id;
+    WHERE id = p_id;
 
     UPDATE dbo.project_auth_settings
-    SET trusted_origins = COALESCE(update_project.trusted_origins, trusted_origins),
-        proxy_url       = COALESCE(update_project.proxy_url, proxy_url),
+    SET trusted_origins = COALESCE(p_trusted_origins, trusted_origins),
+        proxy_url       = COALESCE(p_proxy_url, proxy_url),
         updated_at      = NOW()
-    WHERE project_id = update_project.id;
+    WHERE project_id = p_id;
 
-    RETURN QUERY SELECT reference AS ref
-                 FROM dbo.projects
-                 WHERE id = update_project.id;
+    SELECT reference
+    INTO v_result
+    FROM dbo.projects
+    WHERE id = p_id;
+
+    RETURN v_result;
 END;
 $$ LANGUAGE plpgsql VOLATILE;
 
@@ -238,12 +242,13 @@ The payload should look like:
 $$;
 
 CREATE OR REPLACE FUNCTION api.get_project_s3_settings(p_project_id uuid)
-    RETURNS SETOF dbo.project_s3_settings AS
+    RETURNS dbo.project_s3_settings AS
 $$
     # VARIABLE_CONFLICT USE_COLUMN
 DECLARE
     -- Extract the user ID from the JWT token.
-    v_user_id uuid := auth.jwt() ->> 'sub';
+    v_user_id  uuid := auth.jwt() ->> 'sub';
+    v_settings dbo.project_s3_settings%ROWTYPE;
 BEGIN
     -- Check if the user is authenticated. If not, raise an unauthorized error.
     IF v_user_id IS NULL THEN
@@ -258,10 +263,12 @@ BEGIN
             HINT = 'User does not have permission to access this project''s settings.';
     END IF;
 
-    RETURN QUERY
-        SELECT s.*
-        FROM dbo.project_s3_settings AS s
-        WHERE s.project_id = p_project_id;
+    SELECT s.*
+    INTO v_settings
+    FROM dbo.project_s3_settings AS s
+    WHERE s.project_id = p_project_id;
+
+    RETURN v_settings;
 END;
 $$
     LANGUAGE plpgsql
