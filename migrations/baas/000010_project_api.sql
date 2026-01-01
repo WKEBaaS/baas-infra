@@ -213,8 +213,8 @@ BEGIN
     SELECT v_project_id,
            provider.name,                            -- 鍵 (key) 直接作為 name
            (provider.config ->> 'enabled')::BOOLEAN, -- 從值 (value) 中提取 enabled
-           provider.config ->> 'client_id',          -- 從值 (value) 中提取 client_id
-           provider.config ->> 'client_secret',      -- 從值 (value) 中提取 client_secret
+           provider.config ->> 'clientId',           -- 從值 (value) 中提取 client_id
+           provider.config ->> 'clientSecret',       -- 從值 (value) 中提取 client_secret
            NOW()
     FROM JSONB_EACH(payload -> 'providers') AS provider(name, config) -- 將物件展開為 name 和 config
     ON CONFLICT (project_id, name) DO UPDATE SET enabled       = excluded.enabled,
@@ -234,8 +234,8 @@ The payload should look like:
 {
   "project_id": "UUID",
   "providers": {
-    "provider_name_1": { "enabled": true, "client_id": "...", "client_secret": "..." },
-    "provider_name_2": { "enabled": false, "client_id": "...", "client_secret": "..." }
+    "provider_name_1": { "enabled": true, "clientId": "...", "clientSecret": "..." },
+    "provider_name_2": { "enabled": false, "clientId": "...", "clientSecret": "..." }
   }
 }
 ```
@@ -358,7 +358,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION api.new_create_class_function(
+CREATE OR REPLACE FUNCTION api.create_class_function(
     p_project_id uuid,
     p_name TEXT,
     p_version SMALLINT,
@@ -488,4 +488,26 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION api.delete_create_class_function(
+    p_project_id uuid,
+    p_name TEXT
+) RETURNS VOID AS
+$$
+DECLARE
+BEGIN
+    IF CURRENT_USER = 'anon' THEN
+        RAISE SQLSTATE 'PT401' USING
+            MESSAGE = 'Unauthorized',
+            HINT = 'User must be authenticated to delete create class function.';
+    END IF;
+    PERFORM api.check_project_permission(p_project_id);
+
+    DELETE
+    FROM dbo.create_class_functions
+    WHERE project_id = p_project_id
+      AND name = p_name;
+END;
+$$ LANGUAGE plpgsql VOLATILE
+                    SECURITY DEFINER;
 -- migrate:down
+
