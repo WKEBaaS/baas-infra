@@ -10,7 +10,7 @@ spec:
     spec:
       containers:
         - name: baas-web
-          image: ghcr.io/wkebaas/web:v0.1.27
+          image: ghcr.io/wkebaas/web:v0.1.28
           ports:
             - containerPort: 3000
           envFrom:
