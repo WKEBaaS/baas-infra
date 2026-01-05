@@ -3,3 +3,4 @@ secret.properties
 .env
 *.key
 *.crt
+/queries
